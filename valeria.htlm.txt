@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Valeria &lt;3</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050510; /* Fondo oscuro espacial */
+            font-family: 'Arial', sans-serif;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .mensaje {
+            position: absolute;
+            color: #FFD700; /* Color dorado/amarillo */
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0;
+            animation: aparecer 3s ease-in-out forwards;
+        }
+        .titulo {
+            position: absolute;
+            top: 15%;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 0 0 15px #FFD700, 0 0 30px #FFA500;
+            z-index: 3;
+            pointer-events: none;
+        }
+        @keyframes aparecer {
+            0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+            20% { opacity: 1; transform: scale(1) translateY(0); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: scale(1.1) translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="titulo">Este detalle es para ti, Valeria &lt;3</div>
+    <div id="contenedor-mensajes"></div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        // Redimensionar el lienzo
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- CONFIGURACIÓN DE PARTÍCULAS (CORAZÓN) ---
+        const particles = [];
+        const numParticles = 600; // Cantidad de partículas para el corazón
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // Función matemática para crear la forma de corazón
+        function getHeartPoint(t) {
+            // Ecuación paramétrica del corazón
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+            // Escala para que se adapte a la pantalla
+            const scale = Math.min(width, height) / 35; 
+            return {
+                x: centerX + x * scale,
+                y: centerY + y * scale
+            };
+        }
+
+        // Crear las partículas del corazón
+        for (let i = 0; i < numParticles; i++) {
+            const t = Math.random() * Math.PI * 2;
+            const target = getHeartPoint(t);
+            // Añadir algo de dispersión aleatoria para que no sea una línea perfecta
+            const offsetX = (Math.random() - 0.5) * 40;
+            const offsetY = (Math.random() - 0.5) * 40;
+            
+            particles.push({
+                x: width / 2 + (Math.random() - 0.5) * 50,
+                y: height / 2 + (Math.random() - 0.5) * 50,
+                targetX: target.x + offsetX,
+                targetY: target.y + offsetY,
+                vx: 0,
+                vy: 0,
+                size: Math.random() * 2 + 1,
+                color: `rgba(255, 215, 0, ${Math.random() * 0.5 + 0.5})` // Dorado
+            });
+        }
+
+        // --- CONFIGURACIÓN DE FLORES AMARILLAS ---
+        const flores = [];
+        const numFlores = 30;
+        const emojisFlores = ['🌻', '🌼', '🌺', '💛', '✨']; // Flores y destellos amarillos
+
+        for (let i = 0; i < numFlores; i++) {
+            flores.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                speedY: Math.random() * 0.5 + 0.2,
+                speedX: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 20 + 15,
+                emoji: emojisFlores[Math.floor(Math.random() * emojisFlores.length)],
+                angle: Math.random() * Math.PI * 2,
+                spin: (Math.random() - 0.5) * 0.02
+            });
+        }
+
+        // --- ANIMACIÓN ---
+        function animate() {
+            // Fondo con estela (para efecto de movimiento)
+            ctx.fillStyle = 'rgba(5, 5, 16, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Dibujar partículas del corazón
+            particles.forEach(p => {
+                // Movimiento suave hacia el objetivo
+                p.vx += (p.targetX - p.x) * 0.02;
+                p.vy += (p.targetY - p.y) * 0.02;
+                p.vx *= 0.95; // Fricción
+                p.vy *= 0.95;
+                p.x += p.vx;
+                p.y += p.vy;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#FFD700';
+                ctx.fill();
+            });
+
+            // Dibujar flores amarillas flotando
+            ctx.shadowBlur = 0; // Quitar sombra para los emojis
+            flores.forEach(f => {
+                f.y -= f.speedY;
+                f.x += f.speedX;
+                f.angle += f.spin;
+
+                // Si sale de la pantalla, reaparece abajo
+                if (f.y < -50) {
+                    f.y = height + 50;
+                    f.x = Math.random() * width;
+                }
+
+                ctx.save();
+                ctx.translate(f.x, f.y);
+                ctx.rotate(f.angle);
+                ctx.font = `${f.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(f.emoji, 0, 0);
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // --- MENSAJES FLOTANTES ---
+        const mensajes = [
+            "Valeria, eres mi persona favorita <3",
+            "Contigo hasta el fin del mundo",
+            "Eres única y especial",
+            "Me encanta tu sonrisa",
+            "Eres mi flor amarilla 🌻",
+            "Gracias por existir, Valeria",
+            "Te quiero mucho <3",
+            "Eres mi lugar seguro",
+            "Mi persona favorita eres tú",
+            "Detalles que enamoran..."
+        ];
+
+        const contenedor = document.getElementById('contenedor-mensajes');
+
+        function crearMensaje() {
+            const div = document.createElement('div');
+            div.className = 'mensaje';
+            div.innerText = mensajes[Math.floor(Math.random() * mensajes.length)];
+            
+            // Posición aleatoria
+            const x = Math.random() * (width - 200) + 100;
+            const y = Math.random() * (height - 100) + 50;
+            div.style.left = `${x}px`;
+            div.style.top = `${y}px`;
+
+            contenedor.appendChild(div);
+
+            // Eliminar después de la animación
+            setTimeout(() => {
+                div.remove();
+            }, 3000);
+        }
+
+        // Iniciar animación
+        animate();
+
+        // Crear mensajes cada 1.5 segundos
+        setInterval(crearMensaje, 1500);
+
+    </script>
+</body>
+</html>
